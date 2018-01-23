@@ -1,4 +1,4 @@
-function multiScaleLayoutV3() { 
+function multiScaleLayoutV4() { 
 	var nodeArray;
 	var apspMatrix;
 	var maxAPSPDistance;
@@ -14,7 +14,7 @@ function multiScaleLayoutV3() {
 
 	var INITIALSIZE;
     this.start = function(nodes, w, h) {
-    	console.log('multiScaleLayoutV3 start:' + nodes.length);
+    	console.log('multiScaleLayoutV4 start:' + nodes.length);
     	this.nodeArray = nodes;
     	this.displayAreaWidth = w;
     	this.displayAreaHeight = h;
@@ -36,18 +36,13 @@ function multiScaleLayoutV3() {
         this.transferIntoConnectedGraph();
     	var k = this.MINSIZE;
     	while(k <= this.nodeArray.length) {
-            console.log("loop");
     		var result = this.computeKCenters(k);
-            console.log("computeKCenters");
     		var centers = result.centers;
     		var vDistances = result.vDistances;
     		var radius = this.selectACenter(vDistances).maxDistance * this.RAD;
     		this.localLayout(centers, radius, vDistances);
-            console.log("localLayout");
     		this.addNoise(centers);
-            console.log("addNoise");
     		k *= this.RATIO;
-            console.log("loopend: " + (k <= this.nodeArray.length));
     	}
     	this.modifyLayout();
     };
@@ -125,9 +120,19 @@ function multiScaleLayoutV3() {
         if(this.groupArray.length == 1) {
             return null;
         }
+        var tmpmark = 0;
         for(var i = 0; i < this.groupArray.length - 1; i++) {
-            var index1 = this.groupArray[i].index1;
-            var index2 = this.groupArray[i + 1].index2;
+            var index1;
+            var index2;
+            if(tmpmark % 3 == 0) {
+                index1 = this.groupArray[i].index1;
+                index2 = this.groupArray[i + 1].index1;
+            }
+            else {
+                index1 = this.groupArray[i - (tmpmark % 4)].index2;
+                index2 = this.groupArray[i + 1].index2;
+            }
+            tmpmark ++;
             this.addALink(index1, index2, i, this.groupArray[i + 1].array);
         }
     };
@@ -205,9 +210,7 @@ function multiScaleLayoutV3() {
     };
 
     this.localLayout = function(centers, radius, vertexDistances) {
-        console.log("computeIndexToNeighbours ing")
         var indexToNeighbours = this.computeIndexToNeighbours(centers, radius, vertexDistances);
-        console.log("computeIndexToNeighbours ed")
         var heapArray = [];
         for(var tmpindex in indexToNeighbours) {
             var tmpres = this.partialDerivativesDelta(this.nodeArray[tmpindex], 
@@ -216,10 +219,7 @@ function multiScaleLayoutV3() {
             this.nodeArray[tmpindex].heapIndex = heapArray.length;
             heapArray.push(this.nodeArray[tmpindex]);
         }
-        console.log("buildMaxHeap ing")
         buildMaxHeap(heapArray);
-        console.log("buildMaxHeap ed")
-        console.log("ITERATIONS ing")
     	for(var i = 0; i < centers.length * this.ITERATIONS; i++) {
     		var maxDeltaNode = heapArray[0];
             var tmpres2 = this.partialDerivativesDelta(maxDeltaNode, 
@@ -251,7 +251,6 @@ function multiScaleLayoutV3() {
                 heapifyInMiddle(heapArray, tmpnode.heapIndex, heapArray.length);
             }
     	}
-        console.log("ITERATIONS ed")
     	//heap sort----------------------------------------------------------------------
         function heapifyInMiddle(array, index, heapSize) {
             var iMax = index;
@@ -450,4 +449,4 @@ function multiScaleLayoutV3() {
     };
 }; 
 
-module.exports = multiScaleLayoutV3;
+module.exports = multiScaleLayoutV4;
